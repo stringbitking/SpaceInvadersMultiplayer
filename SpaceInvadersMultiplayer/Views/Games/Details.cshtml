@@ -1,0 +1,38 @@
+﻿@model IEnumerable<SpaceInvadersMultiplayer.DbModels.GameRoom>
+
+@{
+    ViewBag.Title = "Space Invaders Details ";
+}
+
+<h2>@(ViewBag.Title)</h2>
+
+<h2>Open Games:</h2>
+<table class="table">
+    <tr>
+        <th>
+            Room Id
+        </th>
+        <th>
+            Status
+        </th>
+        <th>
+            Action
+        </th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Status)
+            </td>
+            <td>
+                @Html.ActionLink("Join", "SpaceInvaders", new { id = item.Id })
+            </td>
+        </tr>
+    }
+
+</table>
