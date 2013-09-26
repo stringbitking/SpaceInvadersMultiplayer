@@ -255,6 +255,7 @@
     <Content Include="img\glyphicons-halflings-white.png" />
     <Content Include="img\glyphicons-halflings.png" />
     <Content Include="img\invader.jpg" />
+    <Content Include="img\invader.png" />
     <Content Include="img\player-ship.png" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
