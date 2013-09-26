@@ -138,7 +138,7 @@ function loop() {
 
     renderFriendlies();
     
-    //refresh invaders
+    //refresh invaderss
     if (frameCounter % 100 == 0) {
         chat.server.refreshInvaders({ invaders: invaders }, gameId, playerShip.id);
     }
