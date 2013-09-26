@@ -1,10 +1,10 @@
 
-var canvas, ctx,
+var canvas, ctx, gameLoop,
 	leftDown, rightDown;
 
 var playerShip, friendlyShips,
     bullets, invaders, particles,
-    images;
+    images, projectiles;
 
 var screenHeight, screenWidth;
 //screenWidth = window.innerWidth;
@@ -47,6 +47,7 @@ chat.client.refreshShipPosition = function (ship) {
             if (friendlyShips[i].id == ship.id) {
                 friendlyShips[i].x = ship.x;
                 friendlyShips[i].y = ship.y;
+                friendlyShips[i].lives = ship.lives;
                 break;
             }
         }
@@ -69,6 +70,12 @@ chat.client.fireBulletAll = function (bullet) {
     }
 };
 
+chat.client.fireProjectileAll = function (projectile) {
+
+    var newProjectile = new Projectile(projectile.x, projectile.y);
+    projectiles.push(newProjectile);
+};
+
 chat.client.startGame = function () {
     resetInvaders();
 };
@@ -79,6 +86,7 @@ chat.client.makeMainPlayer = function () {
 
 $.connection.hub.start().done(function () {
 
+    chat.server.joinGameRoom(gameId);
     loadImages();
     playerShip = new PlayerShip(screenWidth / 2, screenHeight - 80);
     registerShip();
@@ -99,11 +107,12 @@ function init() {
     window.addEventListener('keyup', keyUp);
 
     bullets = [];
+    projectiles = [];
     particles = [];
     invaders = [];
     //resetInvaders();
 
-    setInterval(loop, 1000 / 50);
+    gameLoop = setInterval(loop, 1000 / 50);
 
 }
 
@@ -122,7 +131,11 @@ function loop() {
     renderBullets();
     renderInvaders();
     updateParticles();
-    playerShip.render(ctx);
+
+    if (playerShip.lives > 0) {
+        playerShip.render(ctx);
+    }
+
     renderFriendlies();
     
     //refresh invaders
@@ -158,6 +171,11 @@ function updateBullets() {
 
         bullets[i].update();
     }
+
+    for (var i = 0; i < projectiles.length; i++) {
+
+        projectiles[i].update();
+    }
 }
 
 function updateParticles() {
@@ -171,6 +189,11 @@ function renderBullets() {
     for (var i = 0; i < bullets.length; i++) {
 
         bullets[i].render(ctx);
+    }
+
+    for (var i = 0; i < projectiles.length; i++) {
+
+        projectiles[i].render(ctx);
     }
 }
 
@@ -255,7 +278,7 @@ function loadImages() {
     images['player-ship'] = imgPlayerShip;
 
     var imgInvaderShip = new Image();
-    imgInvaderShip.src = "../../img/invader.jpg";
+    imgInvaderShip.src = "../../img/invader.png";
     images['invader-ship'] = imgInvaderShip;
 
     var imgFireball = new Image();
@@ -286,6 +309,63 @@ function checkCollisions() {
             }
         }
     }
+
+    for (var i = 0; i < projectiles.length; i++) {
+        var projectile = projectiles[i];
+
+        if ((projectile.x > playerShip.x) && (projectile.x < playerShip.x + playerShip.width)
+			&& (projectile.y > playerShip.y) && (projectile.y < playerShip.y + playerShip.height)) {
+
+            playerShip.lives--;
+            
+            projectiles.splice(i, 1);
+            i--;
+
+            makeExplosion(playerShip.x + playerShip.width / 2, playerShip.y + playerShip.height / 2)
+            if (playerShip.lives == 0) {
+                playerShip.y = -100;
+            }
+        }
+
+        if (friendlyShips && friendlyShips.length > 0) {
+            if ((projectile.x > friendlyShips[0].x) && (projectile.x < friendlyShips[0].x + friendlyShips[0].width)
+                && (projectile.y > playerShip.y) && (projectile.y < friendlyShips[0].y + friendlyShips[0].height)) {
+
+                friendlyShips[0].lives--;
+
+                projectiles.splice(i, 1);
+                i--;
+
+                makeExplosion(playerShip.x + playerShip.width / 2, playerShip.y + playerShip.height / 2)
+                if (friendlyShips[0].lives == 0) {
+                    friendlyShips[0].y = -100;
+                }
+            }
+        }
+
+        if (playerShip.lives <= 0) {
+            if (friendlyShips && friendlyShips.length > 0) {
+                if (friendlyShips[0].lives <= 0) {
+                    GameOver();
+                }
+            }
+            else {
+                GameOver();
+            }
+        }
+    }
+}
+
+function GameOver() {
+    clearInterval(gameLoop);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, screenWidth, screenHeight);
+
+    ctx.save();
+    ctx.fillStyle = "blue";
+    ctx.font = "bold 65px Arial";
+    ctx.fillText("GAME OVER!", 200, 200);
+    ctx.restore();
 }
 
 function checkKeys() {
@@ -293,12 +373,12 @@ function checkKeys() {
     if (leftDown) {
         if (playerShip.x >= 0) {
             playerShip.x -= 10;
-            chat.server.refreshShip(playerShip);
+            chat.server.refreshShip(playerShip, gameId);
         }
     } else if (rightDown) {
         if (playerShip.x <= screenWidth - 50) {
             playerShip.x += 10;
-            chat.server.refreshShip(playerShip);
+            chat.server.refreshShip(playerShip, gameId);
         }
     }
 }
@@ -313,7 +393,7 @@ function keyDown(e) {
 
     if (e.keyCode == 32) {
         var bullet = new Bullet(playerShip.x + playerShip.width / 2, playerShip.y);
-        chat.server.fireBullet(bullet);
+        chat.server.fireBullet(bullet, gameId);
         bullets.push(bullet);
     }
 }
@@ -336,6 +416,7 @@ function PlayerShip(x, y) {
     this.width = 60;
     this.height = 40;
     this.isRejoining = false;
+    this.lives = 1;
 
     this.render = function (ctx) {
         var self = this;
@@ -362,6 +443,20 @@ function Bullet(x, y) {
     }
 }
 
+function Projectile(x, y) {
+    this.x = x;
+    this.y = y;
+
+    this.update = function () {
+        this.y += 1;
+
+    }
+    this.render = function (ctx) {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.x, this.y, 4, 10);
+    }
+}
+
 function Invader(x, y) {
 
     this.x = x;
@@ -372,6 +467,16 @@ function Invader(x, y) {
 
     this.update = function () {
         this.x += this.velX;
+
+        if (isMainPlayer) {
+            var rndNum = Math.floor((Math.random() * 1000) + 1);
+
+            if (rndNum > 999) {
+                var projectile = new Projectile(this.x + 20, this.y + 20);
+                chat.server.fireProjectile(projectile, gameId);
+                projectiles.push(projectile);
+            }
+        }
     }
 
     this.render = function (ctx) {
