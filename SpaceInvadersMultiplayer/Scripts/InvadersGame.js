@@ -549,7 +549,7 @@ function Star(x, y) {
         this.y += this.velY;
         
         if (this.y >= screenHeight) {
-            this.y = -1;
+            this.y = 0;
             this.x = Math.random() * screenWidth;
         }
     }
