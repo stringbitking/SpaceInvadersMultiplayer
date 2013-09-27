@@ -143,7 +143,7 @@ function loop() {
     renderFriendlies();
     
     //refresh invaderss
-    if (frameCounter % 20 == 0) {
+    if (frameCounter % 80 == 0) {
         chat.server.refreshInvaders({ invaders: invaders }, gameId, playerShip.id);
     }
 
@@ -544,7 +544,12 @@ function Star(x, y) {
     this.x = x;
     this.y = y;
     this.size = Math.random() * 15 + 1;
-    this.velY = (this.size - 5) / 10 ;
+    this.velY = (this.size - 5) / 10;
+
+    if (this.velY < 0) {
+        this.velY = this.size / 10;
+    }
+
     this.update = function () {
         this.y += this.velY;
         

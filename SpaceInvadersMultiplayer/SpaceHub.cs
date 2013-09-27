@@ -34,6 +34,7 @@ namespace SpaceInvadersMultiplayer
                 if (room.Player1Id == null || room.Player1Id.Length == 0)
                 {
                     room.Player1Id = obj.id;
+                    room.Status = RoomStatus.Waiting;
                 }
                 else
                 {
