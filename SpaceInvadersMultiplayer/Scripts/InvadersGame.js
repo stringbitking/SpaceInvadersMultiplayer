@@ -543,8 +543,8 @@ function Star(x, y) {
 
     this.x = x;
     this.y = y;
-    this.velY = Math.random();
-    this.size = Math.random() * 20 - 5;
+    this.size = Math.random() * 15 + 1;
+    this.velY = (this.size - 5) / 10 ;
     this.update = function () {
         this.y += this.velY;
         
@@ -557,6 +557,8 @@ function Star(x, y) {
     this.render = function (ctx) {
         ctx.save();
 
+        if(0 < this.x && this.x < screenWidth &&
+            0 < this.y && this.y < screenHeight)
         ctx.drawImage(images['star'], this.x, this.y, this.size, this.size);
 
         ctx.restore();
