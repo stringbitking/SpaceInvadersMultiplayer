@@ -257,6 +257,7 @@
     <Content Include="img\invader.jpg" />
     <Content Include="img\invader.png" />
     <Content Include="img\player-ship.png" />
+    <Content Include="img\star.png" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Scripts\http-requester.js" />

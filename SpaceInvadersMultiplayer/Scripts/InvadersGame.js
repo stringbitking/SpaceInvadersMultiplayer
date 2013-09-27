@@ -4,7 +4,7 @@ var canvas, ctx, gameLoop,
 
 var playerShip, friendlyShips,
     bullets, invaders, particles,
-    images, projectiles;
+    images, projectiles, stars;
 
 var screenHeight, screenWidth;
 //screenWidth = window.innerWidth;
@@ -110,7 +110,8 @@ function init() {
     projectiles = [];
     particles = [];
     invaders = [];
-    //resetInvaders();
+
+    resetStars();
 
     gameLoop = setInterval(loop, 1000 / 50);
 
@@ -128,9 +129,12 @@ function loop() {
 
     checkCollisions();
 
+    renderStars();
     renderBullets();
     renderInvaders();
+    
     updateParticles();
+    updateStars();
 
     if (playerShip.lives > 0) {
         playerShip.render(ctx);
@@ -139,7 +143,7 @@ function loop() {
     renderFriendlies();
     
     //refresh invaderss
-    if (frameCounter % 100 == 0) {
+    if (frameCounter % 20 == 0) {
         chat.server.refreshInvaders({ invaders: invaders }, gameId, playerShip.id);
     }
 
@@ -155,6 +159,15 @@ function resetInvaders() {
             invaders.push(invader);
 
         }
+    }
+}
+
+function resetStars() {
+    stars = [];
+
+    for (var i = 0; i < 50; i++) {
+        var star = new Star(Math.random() * screenWidth, Math.random() * screenHeight);
+        stars.push(star);
     }
 }
 
@@ -228,6 +241,18 @@ function renderInvaders() {
     }
 }
 
+function renderStars() {
+    for (var i = 0; i < stars.length; i++) {
+        stars[i].render(ctx);
+    }
+}
+
+function updateStars() {
+    for (var i = 0; i < stars.length; i++) {
+        stars[i].update();
+    }
+}
+
 function registerShip() {
     var localId = localStorage.getItem("id");
 
@@ -284,6 +309,10 @@ function loadImages() {
     var imgFireball = new Image();
     imgFireball.src = "../../img/fireball.png";
     images['fireball'] = imgFireball;
+
+    var imgStar = new Image();
+    imgStar.src = "../../img/star.png";
+    images['star'] = imgStar;
 }
 
 //---------------------- Events -----------------------
@@ -510,4 +539,27 @@ function Particle(x, y) {
 
 }
 
+function Star(x, y) {
 
+    this.x = x;
+    this.y = y;
+    this.velY = Math.random();
+    this.size = Math.random() * 20 - 5;
+    this.update = function () {
+        this.y += this.velY;
+        
+        if (this.y >= screenHeight) {
+            this.y = -1;
+            this.x = Math.random() * screenWidth;
+        }
+    }
+
+    this.render = function (ctx) {
+        ctx.save();
+
+        ctx.drawImage(images['star'], this.x, this.y, this.size, this.size);
+
+        ctx.restore();
+    }
+
+}
